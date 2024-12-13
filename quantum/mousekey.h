@@ -120,6 +120,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #        define MOUSEKEY_WHEEL_DECELERATED_MOVEMENTS 8
 #    endif
 
+#ifndef MOUSEKEY_VARIABLE
+#    define MOUSEKEY_VARIABLE 0
+#endif
+
 #else /* #ifndef MK_3_SPEED */
 
 #    ifndef MK_C_OFFSET_UNMOD
@@ -190,6 +194,10 @@ void           mousekey_on(uint8_t code);
 void           mousekey_off(uint8_t code);
 void           mousekey_clear(void);
 void           mousekey_send(void);
+void           mousekey_set_speed_x(uint8_t);
+void           mousekey_set_speed_y(uint8_t);
+void           mousekey_set_speed_h(uint8_t);
+void           mousekey_set_speed_v(uint8_t);
 report_mouse_t mousekey_get_report(void);
 bool           should_mousekey_report_send(report_mouse_t *mouse_report);
 

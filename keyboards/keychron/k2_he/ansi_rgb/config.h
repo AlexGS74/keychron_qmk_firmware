@@ -20,6 +20,7 @@
 /* RGB Matrix driver configuration */
 #    define DRIVER_COUNT 2
 #    define RGB_MATRIX_LED_COUNT 84
+#    define MOUSEKEY_VARIABLE 1
 
 #    define SPI_SCK_PIN A5
 #    define SPI_MISO_PIN A6

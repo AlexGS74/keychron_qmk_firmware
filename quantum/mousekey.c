@@ -42,6 +42,12 @@ static void           mousekey_debug(void);
 static uint8_t        mousekey_accel        = 0;
 static uint8_t        mousekey_repeat       = 0;
 static uint8_t        mousekey_wheel_repeat = 0;
+static uint8_t        mousekey_variable     = MOUSEKEY_VARIABLE;
+static uint8_t        mousekey_speed_x      = 1;
+static uint8_t        mousekey_speed_y      = 1;
+static uint8_t        mousekey_speed_h      = 1;
+static uint8_t        mousekey_speed_v      = 1;
+#
 #ifdef MOUSEKEY_INERTIA
 static uint8_t mousekey_frame     = 0; // track whether gesture is inactive, first frame, or repeating
 static int8_t  mousekey_x_dir     = 0; // -1 / 0 / 1 = left / neutral / right
@@ -92,9 +98,15 @@ uint8_t mk_wheel_time_to_max = MOUSEKEY_WHEEL_TIME_TO_MAX;
 
 /* Default accelerated mode */
 
-static uint8_t move_unit(void) {
+static uint8_t move_unit(uint8_t axis) {
     uint16_t unit;
-    if (mousekey_accel & (1 << 0)) {
+    if (mousekey_variable) {
+        if (axis) {
+            unit = mousekey_speed_x;
+        } else {
+            unit = mousekey_speed_y;
+        }
+    } else if (mousekey_accel & (1 << 0)) {
         unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed) / 4;
     } else if (mousekey_accel & (1 << 1)) {
         unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed) / 2;
@@ -108,6 +120,24 @@ static uint8_t move_unit(void) {
         unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed * mousekey_repeat) / mk_time_to_max;
     }
     return (unit > MOUSEKEY_MOVE_MAX ? MOUSEKEY_MOVE_MAX : (unit == 0 ? 1 : unit));
+}
+
+/* Used to set acceleration from other means such as hall effect */
+
+void mousekey_set_speed_x(uint8_t speed) {
+   mousekey_speed_x = speed;
+}
+
+void mousekey_set_speed_y(uint8_t speed) {
+   mousekey_speed_y = speed;
+}
+
+void mousekey_set_speed_h(uint8_t speed) {
+   mousekey_speed_h = speed;
+}
+
+void mousekey_set_speed_v(uint8_t speed) {
+   mousekey_speed_v = speed;
 }
 
 #            else // MOUSEKEY_INERTIA mode
@@ -157,9 +187,15 @@ static int8_t move_unit(uint8_t axis) {
 
 #            endif // end MOUSEKEY_INERTIA mode
 
-static uint8_t wheel_unit(void) {
+static uint8_t wheel_unit(uint8_t axis) {
     uint16_t unit;
-    if (mousekey_accel & (1 << 0)) {
+    if (mousekey_variable) {
+       if (axis) {
+           unit = mousekey_speed_h;
+       } else {
+           unit = mousekey_speed_v;
+       }
+    } else if (mousekey_accel & (1 << 0)) {
         unit = (MOUSEKEY_WHEEL_DELTA * mk_wheel_max_speed) / 4;
     } else if (mousekey_accel & (1 << 1)) {
         unit = (MOUSEKEY_WHEEL_DELTA * mk_wheel_max_speed) / 2;
@@ -341,8 +377,8 @@ void mousekey_task(void) {
 
     if ((tmpmr.x || tmpmr.y) && timer_elapsed(last_timer_c) > (mousekey_repeat ? mk_interval : mk_delay * 10)) {
         if (mousekey_repeat != UINT8_MAX) mousekey_repeat++;
-        if (tmpmr.x != 0) mouse_report.x = move_unit() * ((tmpmr.x > 0) ? 1 : -1);
-        if (tmpmr.y != 0) mouse_report.y = move_unit() * ((tmpmr.y > 0) ? 1 : -1);
+        if (tmpmr.x != 0) mouse_report.x = move_unit(1) * ((tmpmr.x > 0) ? 1 : -1);
+        if (tmpmr.y != 0) mouse_report.y = move_unit(0) * ((tmpmr.y > 0) ? 1 : -1);
 
         /* diagonal move [1/sqrt(2)] */
         if (mouse_report.x && mouse_report.y) {
@@ -361,8 +397,8 @@ void mousekey_task(void) {
 
     if ((tmpmr.v || tmpmr.h) && timer_elapsed(last_timer_w) > (mousekey_wheel_repeat ? mk_wheel_interval : mk_wheel_delay * 10)) {
         if (mousekey_wheel_repeat != UINT8_MAX) mousekey_wheel_repeat++;
-        if (tmpmr.v != 0) mouse_report.v = wheel_unit() * ((tmpmr.v > 0) ? 1 : -1);
-        if (tmpmr.h != 0) mouse_report.h = wheel_unit() * ((tmpmr.h > 0) ? 1 : -1);
+        if (tmpmr.v != 0) mouse_report.v = wheel_unit(0) * ((tmpmr.v > 0) ? 1 : -1);
+        if (tmpmr.h != 0) mouse_report.h = wheel_unit(1) * ((tmpmr.h > 0) ? 1 : -1);
 
         /* diagonal move [1/sqrt(2)] */
         if (mouse_report.v && mouse_report.h) {
@@ -418,24 +454,24 @@ void mousekey_on(uint8_t code) {
 #    else // no inertia
 
     if (code == KC_MS_UP)
-        mouse_report.y = move_unit() * -1;
+        mouse_report.y = move_unit(0) * -1;
     else if (code == KC_MS_DOWN)
-        mouse_report.y = move_unit();
+        mouse_report.y = move_unit(0);
     else if (code == KC_MS_LEFT)
-        mouse_report.x = move_unit() * -1;
+        mouse_report.x = move_unit(1) * -1;
     else if (code == KC_MS_RIGHT)
-        mouse_report.x = move_unit();
+        mouse_report.x = move_unit(1);
 
 #    endif // inertia or not
 
     else if (code == KC_MS_WH_UP)
-        mouse_report.v = wheel_unit();
+        mouse_report.v = wheel_unit(0);
     else if (code == KC_MS_WH_DOWN)
-        mouse_report.v = wheel_unit() * -1;
+        mouse_report.v = wheel_unit(0) * -1;
     else if (code == KC_MS_WH_LEFT)
-        mouse_report.h = wheel_unit() * -1;
+        mouse_report.h = wheel_unit(1) * -1;
     else if (code == KC_MS_WH_RIGHT)
-        mouse_report.h = wheel_unit();
+        mouse_report.h = wheel_unit(1);
     else if (IS_MOUSEKEY_BUTTON(code))
         mouse_report.buttons |= 1 << (code - KC_MS_BTN1);
     else if (code == KC_MS_ACCEL0)

@@ -42,6 +42,10 @@ enum {
     PROF1,
     PROF2,
     PROF3,
+    HE_M_UP,
+    HE_M_DOWN,
+    HE_M_LEFT,
+    HE_M_RIGHT,
 #endif
     NEW_SAFE_RANGE,
 };
@@ -57,6 +61,10 @@ enum {
     #define PROF1 KC_TRANS
     #define PROF2 KC_TRANS
     #define PROF3 KC_TRANS
+    #define HE_M_UP KC_TRANS
+    #define HE_M_DOWN KC_TRANS
+    #define HE_M_LEFT KC_TRANS
+    #define HE_M_RIGHT KC_TRANS
 #endif
 
 #define KC_TASK KC_TASK_VIEW
@@ -79,6 +87,10 @@ typedef struct PACKED {
 
 bool process_record_keychron_common(uint16_t keycode, keyrecord_t *record);
 void keychron_common_task(void);
+void set_mouse_vertical_last_key_pos(uint8_t col, uint8_t row);
+void set_mouse_horizontal_last_key_pos(uint8_t col, uint8_t row);
+void set_mouse_key_last_key_pos(uint8_t pos, uint8_t col, uint8_t row);
+uint16_t is_mouse_key(uint8_t col, uint8_t row);
 
 #ifdef ENCODER_ENABLE
 void encoder_cb_init(void);
